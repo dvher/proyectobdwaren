@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS Usuario (
     nombre VARCHAR(20) NOT NULL,
     apellido VARCHAR(20) NOT NULL,
     rut INT NOT NULL UNIQUE,
-    contrasena VARCHAR(128) NOT NULL,
+    contrasena VARCHAR(88) NOT NULL,
     fecha_creacion DATE NOT NULL,
     DV VARCHAR(1) NOT NULL UNIQUE,
     estado BOOLEAN NOT NULL,
@@ -37,7 +37,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Select all devices that are unused
 CREATE OR REPLACE FUNCTION dispositivos_libres() RETURNS TABLE(id INT, tipo VARCHAR(15), marca VARCHAR(15), precio INT) AS $$
 BEGIN
     RETURN QUERY SELECT * FROM Dispositivo WHERE Dispositivo.id NOT IN (SELECT id_dispositivo FROM UsuarioDispositivo);
