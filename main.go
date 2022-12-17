@@ -76,19 +76,26 @@ func Agregar() {
 }
 
 func Modificar() {
+
 	PrintMenu(
 		"Qué desea modificar?",
-		"Usuario",
-		"Dispositivo",
+		"Nombre usuario",
+		"Apellido usuario",
+		"Correo usuario",
+		"Contraseña usuario",
 	)
 
 	input := GetInput[int]("Ingrese una opción")
 
 	switch input {
 	case 1:
-		ModificarUsuario()
+		ModificarNombre()
 	case 2:
-		ModificarDispositivo()
+		ModificarApellido()
+	case 3:
+		ModificarCorreo()
+	case 4:
+		ModificarContrasena()
 	default:
 		fmt.Println("Opción inválida")
 	}
@@ -215,6 +222,54 @@ func AddUsuarioDispositivo() {
 	}
 }
 
+func ModificarContrasena() {
+
+	id := GetInput[int]("Ingrese el ID del usuario")
+
+	passwd := GetInput[string]("Ingrese la nueva contraseña")
+
+	CambiarContrasena(id, passwd)
+
+	fmt.Println("Contraseña cambiada correctamente")
+
+}
+
+func ModificarNombre() {
+
+	id := GetInput[int]("Ingrese el ID del usuario")
+
+	nombre := GetInput[string]("Ingrese el nuevo nombre")
+
+	CambiarNombre(id, nombre)
+
+	fmt.Println("Nombre cambiado correctamente")
+
+}
+
+func ModificarApellido() {
+
+	id := GetInput[int]("Ingrese el ID del usuario")
+
+	apellido := GetInput[string]("Ingrese el nuevo apellido")
+
+	CambiarApellido(id, apellido)
+
+	fmt.Println("Apellido cambiado correctamente")
+
+}
+
+func ModificarCorreo() {
+
+	id := GetInput[int]("Ingrese el ID del usuario")
+
+	correo := GetInput[string]("Ingrese el nuevo correo")
+
+	CambiarCorreo(id, correo)
+
+	fmt.Println("Correo cambiado correctamente")
+
+}
+
 func ListarDispositivosUsuario() {
 
 	id_usuario := GetInput[int]("ID del usuario")
@@ -223,33 +278,26 @@ func ListarDispositivosUsuario() {
 
 }
 
-func ModificarUsuario() {
-
-	var (
-		rut int
-		dv  string
-	)
-
-	fmt.Print("Ingrese el rut del usuario: ")
-	fmt.Scanf("%d-%s", &rut, &dv)
-
-}
-
-func ModificarDispositivo() {
-}
-
 func EliminarUsuario() {
 
 	id_usuario := GetInput[int]("ID del usuario")
 
-	DeleteUser(id_usuario)
+	err := DeleteUser(id_usuario)
+
+	if err == nil {
+		fmt.Println("Usuario eliminado correctamente")
+	}
 }
 
 func EliminarDispositivo() {
 
 	id_dispositivo := GetInput[int]("ID del dispositivo")
 
-	DeleteDispositivo(id_dispositivo)
+	err := DeleteDispositivo(id_dispositivo)
+
+	if err == nil {
+		fmt.Println("Dispositivo eliminado correctamente")
+	}
 }
 
 func QuitarDispositivoUsuario() {
@@ -257,8 +305,11 @@ func QuitarDispositivoUsuario() {
 	id_usuario := GetInput[int]("ID del usuario")
 	id_dispositivo := GetInput[int]("ID del dispositivo")
 
-	DeleteUsuarioDispositivo(id_usuario, id_dispositivo)
+	err := DeleteUsuarioDispositivo(id_usuario, id_dispositivo)
 
+	if err == nil {
+		fmt.Println("Relación eliminada correctamente")
+	}
 }
 
 func PrintMenu(title string, options ...string) {

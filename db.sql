@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS Usuario (
     rut INT NOT NULL UNIQUE,
     contrasena VARCHAR(88) NOT NULL,
     fecha_creacion DATE NOT NULL,
-    DV VARCHAR(1) NOT NULL UNIQUE,
+    DV VARCHAR(1) NOT NULL,
     estado BOOLEAN NOT NULL,
     PRIMARY KEY(id)
 );
@@ -21,11 +21,12 @@ CREATE TABLE IF NOT EXISTS Dispositivo (
 );
 
 CREATE TABLE IF NOT EXISTS UsuarioDispositivo (
-    id SERIAL PRIMARY KEY,
+    id SERIAL,
     id_usuario INT NOT NULL,
     id_dispositivo INT NOT NULL,
     FOREIGN KEY(id_usuario) REFERENCES Usuario(id),
-    FOREIGN KEY(id_dispositivo) REFERENCES Dispositivo(id)
+    FOREIGN KEY(id_dispositivo) REFERENCES Dispositivo(id),
+    PRIMARY KEY(id)
 );
 
 CREATE OR REPLACE FUNCTION cantidad_dispositivos_usuario(id_user INT) RETURNS INT AS $$
@@ -42,3 +43,23 @@ BEGIN
     RETURN QUERY SELECT * FROM Dispositivo WHERE Dispositivo.id NOT IN (SELECT id_dispositivo FROM UsuarioDispositivo);
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_state_t() RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Usuario SET estado = TRUE WHERE id = NEW.id_usuario;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_state_f() RETURNS TRIGGER AS $$
+BEGIN
+    IF (SELECT cantidad_dispositivos_usuario(OLD.id_usuario)) = 0 THEN
+        UPDATE Usuario SET estado = FALSE WHERE id = OLD.id_usuario;
+    END IF;
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_state_deletion AFTER DELETE ON UsuarioDispositivo FOR EACH ROW EXECUTE FUNCTION update_state_f();
+
+CREATE TRIGGER update_state_inclusion AFTER INSERT ON UsuarioDispositivo FOR EACH ROW EXECUTE FUNCTION update_state_t();

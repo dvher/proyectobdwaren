@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -23,7 +22,7 @@ func InitDB() error {
 	db, err = sql.Open("postgres", connStr)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al abrir la base de datos")
 		return err
 	}
 	return nil
@@ -51,7 +50,7 @@ func CrearUsuario(user *Usuario) error {
 	)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al crear usuario")
 		return err
 	}
 	return nil
@@ -61,7 +60,7 @@ func AgregarDispositivo(disp *Dispositivo) error {
 	_, err := db.Exec("INSERT INTO Dispositivo(tipo, marca, precio) VALUES ($1, $2, $3);", disp.Tipo, disp.Marca, disp.Precio)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al crear dispositivo")
 		return err
 	}
 	return nil
@@ -75,7 +74,7 @@ func AgregarUsuarioDispositivo(ud *UsuarioDispositivo) error {
 	)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al agregar dispositivo a usuario")
 		return err
 	}
 	return nil
@@ -88,14 +87,14 @@ func CantidadDispositivosUsuario(id int) (int, error) {
 	stmt, err := db.Prepare("SELECT cantidad_dispositivos_usuario($1);")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return 0, err
 	}
 
 	rows, err := stmt.Query(id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return 0, err
 	}
 
@@ -103,14 +102,14 @@ func CantidadDispositivosUsuario(id int) (int, error) {
 	err = rows.Scan(&cantidad)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al escanear resultado")
 		return 0, err
 	}
 
 	err = rows.Close()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al cerrar rows")
 		return 0, err
 	}
 
@@ -126,14 +125,14 @@ func DispositivosLibres() (disps []Dispositivo, err error) {
 	stmt, err := db.Prepare("SELECT * FROM dispositivos_libres();")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err := stmt.Query()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
@@ -159,14 +158,14 @@ func ListarUsuarios() (err error) {
 	stmt, err := db.Prepare("SELECT * FROM Usuario;")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err := stmt.Query()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
@@ -207,14 +206,14 @@ func ListarDispositivos() (err error) {
 	stmt, err := db.Prepare("SELECT * FROM Dispositivo;")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err := stmt.Query()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
@@ -237,29 +236,31 @@ func ListarDispositivos() (err error) {
 func ListarDispositivosDeUsuario(id int) (err error) {
 
 	var (
-		nombre   string
-		apellido string
-		rut      int
-		dv       string
-		d        Dispositivo
-		disps    []Dispositivo
+		nombre      string
+		apellido    string
+		rut         int
+		dv          string
+		d           Dispositivo
+		disps       []Dispositivo
+		precioTotal int = 0
 	)
 
 	stmt, err := db.Prepare("SELECT nombre, apellido, rut, dv FROM usuario WHERE id = $1;")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err := stmt.Query(id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
 	if !rows.Next() {
+		fmt.Println("Usuario no encontrado")
 		return errors.New("Usuario no encontrado")
 	}
 
@@ -269,19 +270,19 @@ func ListarDispositivosDeUsuario(id int) (err error) {
 		return
 	}
 
-	fmt.Printf("Usuario: %s %s de RUT %d-%s tiene:\n\n", nombre, apellido, rut, dv)
+	fmt.Printf("%s %s de RUT %d-%s tiene:\n\n", nombre, apellido, rut, dv)
 
 	stmt, err = db.Prepare("SELECT id_dispositivo FROM UsuarioDispositivo WHERE id_usuario = $1;")
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err = stmt.Query(id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
@@ -289,34 +290,37 @@ func ListarDispositivosDeUsuario(id int) (err error) {
 		err = rows.Scan(&d.Id)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al escanear")
 			return
 		}
 
 		stmt, err = db.Prepare("SELECT * FROM Dispositivo WHERE id = $1;")
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al preparar consulta")
 			return
 		}
 
 		disp_rows, err := stmt.Query(d.Id)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al ejecutar consulta")
 			return err
 		}
 
 		if !disp_rows.Next() {
+			fmt.Println("Dispositivo no encontrado")
 			return errors.New("Dispositivo no encontrado")
 		}
 
 		err = disp_rows.Scan(&d.Id, &d.Tipo, &d.Marca, &d.Precio)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al escanear")
 			return err
 		}
+
+		precioTotal += d.Precio
 
 		disps = append(disps, d)
 
@@ -325,6 +329,8 @@ func ListarDispositivosDeUsuario(id int) (err error) {
 	for _, v := range disps {
 		fmt.Println(v.String())
 	}
+
+	fmt.Printf("Precio total: $%d\n", precioTotal)
 
 	return
 
@@ -341,14 +347,14 @@ func ListarUsuariosDispositivos() (err error) {
 	)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al preparar consulta")
 		return
 	}
 
 	rows, err := stmt.Query()
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al ejecutar consulta")
 		return
 	}
 
@@ -356,14 +362,14 @@ func ListarUsuariosDispositivos() (err error) {
 		err = rows.Scan(&id)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al escanear")
 			return
 		}
 
 		err = ListarDispositivosDeUsuario(id)
 
 		if err != nil {
-			log.Println(err)
+			fmt.Println("Error al listar dispositivos de usuario")
 			return
 		}
 	}
@@ -373,17 +379,17 @@ func ListarUsuariosDispositivos() (err error) {
 
 func DeleteUser(id int) error {
 
-	_, err := db.Exec("DELETE FROM Usuario WHERE id = $1;", id)
+	_, err := db.Exec("DELETE FROM UsuarioDispositivo WHERE id_usuario = $1;", id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return err
 	}
 
-	_, err = db.Exec("DELETE FROM UsuarioDispositivo WHERE id_usuario = $1;", id)
+	_, err = db.Exec("DELETE FROM Usuario WHERE id = $1;", id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println(err)
 		return err
 	}
 
@@ -392,17 +398,17 @@ func DeleteUser(id int) error {
 
 func DeleteDispositivo(id int) error {
 
-	_, err := db.Exec("DELETE FROM Dispositivo WHERE id = $1;", id)
+	_, err := db.Exec("DELETE FROM UsuarioDispositivo WHERE id_dispositivo = $1;", id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al eliminar dispositivo")
 		return err
 	}
 
-	_, err = db.Exec("DELETE FROM UsuarioDispositivo WHERE id_dispositivo = $1;", id)
+	_, err = db.Exec("DELETE FROM Dispositivo WHERE id = $1;", id)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al eliminar dispositivo")
 		return err
 	}
 
@@ -414,9 +420,53 @@ func DeleteUsuarioDispositivo(id_usr, id_dev int) error {
 	_, err := db.Exec("DELETE FROM UsuarioDispositivo WHERE id_usuario = $1 AND id_dispositivo = $2;", id_usr, id_dev)
 
 	if err != nil {
-		log.Println(err)
+		fmt.Println("Error al eliminar dispositivo")
 		return err
 	}
 
 	return nil
+}
+
+func CambiarContrasena(id_usr int, passwd string) {
+
+	pass := sha512.New()
+	io.WriteString(pass, passwd)
+	pwd := base64.StdEncoding.EncodeToString(pass.Sum(nil))
+
+	_, err := db.Exec("UPDATE Usuario SET contrasena = $1 WHERE id = $2;", pwd, id_usr)
+
+	if err != nil {
+		fmt.Println("Error al cambiar contraseña")
+	}
+
+}
+
+func CambiarNombre(id_usr int, nombre string) {
+
+	_, err := db.Exec("UPDATE Usuario SET nombre = $1 WHERE id = $2;", nombre, id_usr)
+
+	if err != nil {
+		fmt.Println("Error al cambiar nombre")
+	}
+
+}
+
+func CambiarApellido(id_usr int, apellido string) {
+
+	_, err := db.Exec("UPDATE Usuario SET apellido = $1 WHERE id = $2;", apellido, id_usr)
+
+	if err != nil {
+		fmt.Println("Error al cambiar apellido")
+	}
+
+}
+
+func CambiarCorreo(id_usr int, correo string) {
+
+	_, err := db.Exec("UPDATE Usuario SET correo = $1 WHERE id = $2;", correo, id_usr)
+
+	if err != nil {
+		fmt.Println("Error al cambiar correo")
+	}
+
 }
