@@ -5,3 +5,5 @@ CREATE DATABASE proyectodb;
 CREATE USER proyecto_user WITH PASSWORD 'proyecto_pass';
 GRANT ALL PRIVILEGES ON DATABASE proyectodb TO proyecto_user;
 ```
+
+Luego se deben ejecutar los comandos del archivo db.sql para crear las tablas y sus relaciones.
