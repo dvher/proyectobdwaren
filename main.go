@@ -12,30 +12,38 @@ func main() {
 		return
 	}
 
-	PrintMenu(
+	fmt.Println(
 		"Bienvenido al sistema de gestión de dispositivos, qué desea hacer?",
-		"Agregar",
-		"Modificar",
-		"Eliminar",
-		"Listar",
-		"Salir",
 	)
 
-	input := GetInput[int]("Ingrese una opción")
+MAIN_CYCLE:
+	for {
+		PrintMenu(
+			"",
+			"Agregar",
+			"Modificar",
+			"Eliminar",
+			"Listar",
+			"Salir",
+		)
+		input := GetInput[int]("Ingrese una opción")
 
-	switch input {
-	case 1:
-		Agregar()
-	case 2:
-		Modificar()
-	case 3:
-		Eliminar()
-	case 4:
-		Listar()
-	case 5:
-		fmt.Println("Saliendo...")
-	default:
-		fmt.Println("Opción inválida")
+		switch input {
+		case 1:
+			Agregar()
+		case 2:
+			Modificar()
+		case 3:
+			Eliminar()
+		case 4:
+			Listar()
+		case 5:
+			fmt.Println("Saliendo...")
+			break MAIN_CYCLE
+		default:
+			fmt.Println("Opción inválida")
+		}
+
 	}
 
 	err = CloseDB()
@@ -50,6 +58,7 @@ func Agregar() {
 		"Qué desea agregar?",
 		"Usuario",
 		"Dispositivo",
+		"Asignar dispositivo a usuario",
 	)
 
 	input := GetInput[int]("Ingrese una opción")
@@ -59,6 +68,8 @@ func Agregar() {
 		AgregarUsuario()
 	case 2:
 		AddDispositivo()
+	case 3:
+		AddUsuarioDispositivo()
 	default:
 		fmt.Println("Opción inválida")
 	}
@@ -88,6 +99,7 @@ func Eliminar() {
 		"Qué desea eliminar?",
 		"Usuario",
 		"Dispositivo",
+		"Quitar dispositivo a un usuario",
 	)
 
 	input := GetInput[int]("Ingrese una opción")
@@ -97,6 +109,8 @@ func Eliminar() {
 		EliminarUsuario()
 	case 2:
 		EliminarDispositivo()
+	case 3:
+		QuitarDispositivoUsuario()
 	default:
 		fmt.Println("Opción inválida")
 	}
@@ -107,6 +121,8 @@ func Listar() {
 		"Qué desea listar?",
 		"Usuarios",
 		"Dispositivos",
+		"Usuarios y sus dispositivos",
+		"Dispositivos de un usuario",
 	)
 
 	input := GetInput[int]("Ingrese una opción")
@@ -116,6 +132,10 @@ func Listar() {
 		ListarUsuarios()
 	case 2:
 		ListarDispositivos()
+	case 3:
+		ListarUsuariosDispositivos()
+	case 4:
+		ListarDispositivosUsuario()
 	default:
 		fmt.Println("Opción inválida")
 	}
@@ -178,6 +198,31 @@ func AddDispositivo() {
 	}
 }
 
+func AddUsuarioDispositivo() {
+	fmt.Println("Ingrese los datos del usuario")
+	id_usuario := GetInput[int]("ID del usuario")
+	id_dispositivo := GetInput[int]("ID del dispositivo")
+
+	ud := UsuarioDispositivo{
+		Id_usuario:     id_usuario,
+		Id_dispositivo: id_dispositivo,
+	}
+
+	err := AgregarUsuarioDispositivo(&ud)
+
+	if err == nil {
+		fmt.Println("Relación creada correctamente")
+	}
+}
+
+func ListarDispositivosUsuario() {
+
+	id_usuario := GetInput[int]("ID del usuario")
+
+	ListarDispositivosDeUsuario(id_usuario)
+
+}
+
 func ModificarUsuario() {
 
 	var (
@@ -194,15 +239,26 @@ func ModificarDispositivo() {
 }
 
 func EliminarUsuario() {
+
+	id_usuario := GetInput[int]("ID del usuario")
+
+	DeleteUser(id_usuario)
 }
 
 func EliminarDispositivo() {
+
+	id_dispositivo := GetInput[int]("ID del dispositivo")
+
+	DeleteDispositivo(id_dispositivo)
 }
 
-func ListarUsuarios() {
-}
+func QuitarDispositivoUsuario() {
 
-func ListarDispositivos() {
+	id_usuario := GetInput[int]("ID del usuario")
+	id_dispositivo := GetInput[int]("ID del dispositivo")
+
+	DeleteUsuarioDispositivo(id_usuario, id_dispositivo)
+
 }
 
 func PrintMenu(title string, options ...string) {
@@ -217,5 +273,6 @@ func GetInput[T any](input_message string) T {
 	var input T
 	fmt.Printf("%s: ", input_message)
 	fmt.Scanln(&input)
+	fmt.Println()
 	return input
 }
